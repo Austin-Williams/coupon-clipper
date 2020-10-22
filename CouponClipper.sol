@@ -12,15 +12,6 @@ interface IERC20 {
 
 // @notice Lets anybody trustlessly redeem coupons on anyone else's behalf for a 1% fee.
 //    Requires that the coupon holder has previously approved this contract via the ESDS `approveCoupons` function.
-//    This will likely be dominated by bots. That is the point: to let bots trustlessly redeem coupons for non-bot users
-//    in exchange for a 1% fee.
-//    The user holds on to their coupons until the moment they are redeemed.
-//    The user can redeem their own coupons, just like normal (without any fees), even if they've approved this contract.
-//    When the user's coupons are redeemed, the ESD is sent directly to the user's account.
-//    NOTE: There is no garuantee that all coupons will be redeemed. If the 1% fee is not enough to cover gas costs or 
-//    otherwise incentivize someone to call `redeem`, then the coupons will not be redeemed this way.
-//    WARNING: DO NOT SEND YOUR COUPONS TO THIS CONTRACT! THEY WILL BE LOST FOREVER!
-//    You only need to APPROVE this contract to move your coupons.
 // @dev Bots should scan for the `CouponApproval` event emitted by the ESDS `approveCoupons` function to find out which 
 //    users have approved this contract to redeem their coupons.
 contract CouponClipper {
