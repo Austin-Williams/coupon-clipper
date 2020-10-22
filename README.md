@@ -1,2 +1,2 @@
 # coupon-clipper
-Better living through bribery
+Better living through bot bribery
