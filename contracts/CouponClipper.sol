@@ -20,25 +20,25 @@ contract CouponClipper {
     IESDS constant private ESDS = IESDS(0x443D2f2755DB5942601fa062Cc248aAA153313D3);
 
     // The percent fee offered by coupon holders to callers (bots), in basis points
-    // E.g., offers[_user] = 50_000 indicates that _user will pay 50_000 basis points (5%) to the caller
+    // E.g., offers[_user] = 500 indicates that _user will pay 500 basis points (5%) to the caller
     mapping(address => uint256) private offers;
 
     // @notice Gets the number of basis points the _user is offering the bots
-    // @dev The default value is 10_000 basis points (1%).
+    // @dev The default value is 100 basis points (1%).
     //   That is, `offers[_user] = 0` is interpretted as 1%.
     //   This way users who are comfortable with the default 1% offer don't have to make any additional contract calls.
     // @param _user The account whose offer we're looking up.
     // @return The number of basis points the account is offering the callers (bots)
     function getOffer(address _user) public view returns (uint256) {
         uint256 offer = offers[_user];
-        return offer == 0 ? 1e4 : offer;
+        return offer == 0 ? 100 : offer;
     }
 
     // @notice Allows msg.sender to change the number of basis points they are offering.
-    // @dev An _offer value of 0 will be interpretted as the "default offer", which is 10_000 basis points (1%).
+    // @dev An _offer value of 0 will be interpretted as the "default offer", which is 100 basis points (1%).
     // @param _offer The number of basis points msg.sender wants to offer the callers (bots).
     function setOffer(uint256 _offer) external {
-        require(_offer < 100e4, "Offer exceeds 100%.");
+        require(_offer <= 10_000, "Offer exceeds 100%.");
         offers[msg.sender] = _offer;
     }
 
@@ -55,7 +55,7 @@ contract CouponClipper {
         ESDS.redeemCoupons(_epoch, _couponAmount);
         
         // pay the caller their fee
-        uint256 botFee = _couponAmount * getOffer(_user) / 100e4;
+        uint256 botFee = _couponAmount * getOffer(_user) / 10_000;
         ESD.transfer(msg.sender, botFee); // @audit-ok : reverts on failure
         
         // send the ESD to the user
