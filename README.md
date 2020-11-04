@@ -4,6 +4,8 @@ Better living through bot bribery
 # where
 `CouponClipper` can be found on mainnet at: [0xF176D56b9B5fB458AE9A223aCc5C3e35402deD12](https://etherscan.io/address/0xF176D56b9B5fB458AE9A223aCc5C3e35402deD12#code)
 
+A friendly UI has been built by Lewi at [https://esd.coupons/](https://esd.coupons/).
+
 # what
 `CouponClipper` is a contract that that helps ESD coupon holders and bot writers come together and help each other.
 
