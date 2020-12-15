@@ -4,7 +4,7 @@ Better living through bot bribery
 Warning: This is unaudited code. Use it at your own risk. Please exercise some prudence.
 
 # where
-`CouponClipperV3` can be found on mainnet at: TODO
+`CouponClipperV3` can be found on mainnet at: [here](https://etherscan.io/address/0x0e2A6Cf9df1F13a1dD1cf151585ea090c280F47a#code)
 
 A friendly UI has been built by Lewi at [https://esd.coupons/](https://esd.coupons/).
 
@@ -17,7 +17,7 @@ Bot writers listen for the [`CouponApproval` events](https://github.com/emptyset
 
 When coupons can be redeemed, bots can call the [`CouponClipperV3.redeem` function](https://github.com/Austin-Williams/coupon-clipper/blob/main/contracts/CouponClipper.sol#L113) to claim any of those user's coupons on their behalf -- taking a fee for their service. The developer gets a "house take" for creating this service, which is a percentage of the proceeds that go to the bots (see the "Improvements Since V2" section below).
 
-TThere is no minimum fee. Users are free to change the fee to any value they want by calling the [`setOffer` function](https://github.com/Austin-Williams/coupon-clipper/blob/main/contracts/CouponClipper.sol#L72) and passing in the number of basis points they want to offer for having their coupons redeemed for them.
+There is no minimum fee. Users are free to change the fee to any value they want by calling the [`setOffer` function](https://github.com/Austin-Williams/coupon-clipper/blob/main/contracts/CouponClipper.sol#L72) and passing in the number of basis points they want to offer for having their coupons redeemed for them.
 
 The ESD foes directly into the user's accounts. No action is required on behalf of the coupon holders other than approving the `CouponClipper` contract via the [`ESDS.approveCoupons` function](https://github.com/emptysetsquad/dollar/blob/master/protocol/contracts/dao/Market.sol#L98).
 
