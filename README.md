@@ -4,7 +4,7 @@ Better living through bot bribery
 Warning: This is unaudited code. Use it at your own risk. Please exercise some prudence.
 
 # where
-`CouponClipperV3` can be found on mainnet at: [here](https://etherscan.io/address/0x0e2A6Cf9df1F13a1dD1cf151585ea090c280F47a#code)
+`CouponClipperV3` can be found on mainnet at: [here](https://etherscan.io/address/0xed410d0948798D94E2A6bD4f088Fa32FCB2167B1#code)
 
 A friendly UI has been built by Lewi at [https://esd.coupons/](https://esd.coupons/).
 

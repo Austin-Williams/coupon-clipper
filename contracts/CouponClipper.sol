@@ -1,7 +1,7 @@
 pragma solidity 0.7.5;
 // SPDX-License-Identifier: MIT
 
-// On mainnet at: 0x0e2A6Cf9df1F13a1dD1cf151585ea090c280F47a
+// On mainnet at: 0xed410d0948798D94E2A6bD4f088Fa32FCB2167B1
 
 /**
 Copyright (c) 2020 Austin Williams
@@ -87,8 +87,8 @@ contract CouponClipperV3 {
         uint256 oldOffer = offers[msg.sender];
         if (_newOffer < oldOffer) {
             uint256 nextEpoch = ESDS.epoch() + 1;
-            uint256 nextEpochStartTIme = getEpochStartTime(nextEpoch);
-            uint256 timeUntilNextEpoch = nextEpochStartTIme.sub(block.timestamp);
+            uint256 nextEpochStartTime = getEpochStartTime(nextEpoch);
+            uint256 timeUntilNextEpoch = nextEpochStartTime.sub(block.timestamp);
             require(timeUntilNextEpoch > 15 minutes, "You cannot reduce your offer within 15 minutes of the next epoch");
         }
         
