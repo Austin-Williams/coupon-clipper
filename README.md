@@ -33,7 +33,7 @@ Please see the issues section for ways you can help.
 
 # Improvements Since V2
 
-I've gotten some excellent feedback from V2 and have implemented the suggestions here, along with some nice features I thought of myself.
+I've gotten some excellent feedback from V2 and have implemented the suggestions here.
 
 **For coupon holders** V3 improves on V2 by removing the old minimum on their offers. The old V2 had a minimum 2% offer, which is now gone. With V3, coupon holders can set as low of an offer as they want.
 
