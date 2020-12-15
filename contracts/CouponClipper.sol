@@ -52,7 +52,7 @@ contract CouponClipperV3 {
     uint256 constant public MAX_HOUSE_RATE_BPS = 1500; // 15% Max house take from bot proceeds
     
     address public house = 0x7Fb471734271b732FbEEd4B6073F401983a406e1; // collector of house take
-    uint256 public houseRate;
+    uint256 public houseRate = 1000; // Defaults to 1000 bps (10%) of proceeds. Can be changed via the `changeHouseRate` function.
     
     event SetOffer(address indexed user, uint256 offer);
     event SetHouseRate(uint256 fee);
