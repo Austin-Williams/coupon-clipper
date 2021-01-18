@@ -1,7 +1,7 @@
 pragma solidity 0.7.5;
 // SPDX-License-Identifier: MIT
 
-// On mainnet at: 0xed410d0948798D94E2A6bD4f088Fa32FCB2167B1
+// On mainnet at: TBD
 
 /**
 Copyright (c) 2020 Austin Williams
@@ -25,18 +25,14 @@ SOFTWARE.
 interface IESDS {
     function redeemCoupons(uint256 _epoch, uint256 _couponAmount) external;
     function transferCoupons(address _sender, address _recipient, uint256 _epoch, uint256 _amount) external;
-    function totalRedeemable() external view returns (uint256);
+    function balanceOfCouponUnderlying(address _account, uint256 _epoch) external view returns (uint256);
     function epoch() external view returns (uint256);
-    function balanceOfCoupons(address _account, uint256 _epoch) external view returns (uint256);
     function advance() external;
 }
 
 interface IERC20 {
     function transfer(address recipient, uint256 amount) external returns (bool);
-}
-
-interface ICHI {
-    function freeFromUpTo(address _addr, uint256 _amount) external returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
 }
 
 // @notice Lets anybody trustlessly redeem coupons on anyone else's behalf for a fee.
@@ -49,28 +45,23 @@ contract CouponClipperV3 {
 
     IERC20 constant private ESD = IERC20(0x36F3FD68E7325a35EB768F1AedaAe9EA0689d723);
     IESDS constant private ESDS = IESDS(0x443D2f2755DB5942601fa062Cc248aAA153313D3);
-    ICHI  constant private CHI = ICHI(0x0000000000004946c0e9F43F4Dee607b0eF1fA1c);
     
     uint256 constant public MAX_HOUSE_RATE_BPS = 1500; // 15% Max house take from bot proceeds
     
-    address public house = 0x7Fb471734271b732FbEEd4B6073F401983a406e1; // collector of house take
-    uint256 public houseRate = 1000; // Defaults to 1000 bps (10%) of proceeds. Can be changed via the `changeHouseRate` function.
+    address public house; // collector of house fee
+    uint256 public houseRate; // Defaults to 1000 bps (10%) of proceeds. Can be changed via the `changeHouseRate` function.
     
     event SetOffer(address indexed user, uint256 offer);
     event SetHouseRate(uint256 fee);
     
-    // frees CHI from msg.sender to reduce gas costs.
-    // requires that msg.sender has approved this contract to use their CHI.
-    modifier useCHI {
-        uint256 gasStart = gasleft();
-        _;
-        uint256 gasSpent = 21000 + gasStart - gasleft() + (16 * msg.data.length);
-        CHI.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41947);
-    }
-
     // The basis points offered by coupon holders to have their coupons redeemed -- default is 0 bps (0%).
     // E.g., offers[_user] = 500 indicates that _user will pay 500 basis points (5%) to have their coupons redeemed for them.
     mapping(address => uint256) private offers;
+    
+    constructor() {
+        house = 0x7Fb471734271b732FbEEd4B6073F401983a406e1;
+        houseRate = 1000; // (10%) of the proceeds.
+    }
 
     // @notice Gets the number of basis points the _user is offering the bots.
     // @param _user The account whose offer we're looking up.
@@ -96,69 +87,38 @@ contract CouponClipperV3 {
         
         emit SetOffer(msg.sender, _newOffer);
     }
-    
+
     // @notice Internal logic used to redeem coupons on the coupon holder's bahalf
     // @param _user Address of the user holding the coupons (and who has approved this contract)
     // @param _epoch The epoch in which the _user purchased the coupons
-    // @param _couponAmount The number of coupons to redeem (18 decimals)
-    function _redeem(address _user, uint256 _epoch, uint256 _couponAmount) internal {
+    // @param _amount The number of coupons to redeem (18 decimals), typically balanceOfCouponUnderlying
+    function _redeem(address _user, uint256 _epoch, uint256 _amount) internal {
         
         // pull user's coupons into this contract (requires that the user has approved this contract)
-        ESDS.transferCoupons(_user, address(this), _epoch, _couponAmount); // @audit-info : reverts on failure
+        ESDS.transferCoupons(_user, address(this), _epoch, _amount); // @audit-info : reverts on failure
         
         // redeem the coupons for ESD
-        ESDS.redeemCoupons(_epoch, _couponAmount); // @audit-info : reverts on failure
+        uint256 balanceOfCouponUnderlying = ESDS.balanceOfCouponUnderlying(address(this), _epoch); // @audit-info handles unexpected underlying balance
+        ESDS.redeemCoupons(_epoch, balanceOfCouponUnderlying); // @audit-info : reverts on failure
         
         // pay the fees
+        uint256 esdRevenue = ESD.balanceOf(address(this));
         uint256 totalFeeRate = getOffer(_user);
-        uint256 totalFee = _couponAmount.mul(totalFeeRate).div(10_000);
+        uint256 totalFee = esdRevenue.mul(totalFeeRate).div(10_000);
         uint256 houseFee = totalFee.mul(houseRate).div(10_000);
         uint256 botFee = totalFee.sub(houseFee);
         ESD.transfer(house, houseFee); // @audit-info : reverts on failure
         ESD.transfer(msg.sender, botFee); // @audit-info : reverts on failure
         
         // send the ESD to the user
-        ESD.transfer(_user, _couponAmount.sub(totalFee)); // @audit-info : reverts on failure
+        ESD.transfer(_user, esdRevenue.sub(totalFee)); // @audit-info : reverts on failure
     }
     
     // @notice Allows anyone to redeem coupons for ESD on the coupon-holder's bahalf
     // @dev Backwards compatible with CouponClipper V1 and V2.
-    function redeem(address _user, uint256 _epoch, uint256 _couponAmount) external {
-        _redeem(_user, _epoch, _couponAmount);
+    function redeem(address _user, uint256 _epoch, uint256 _amount) external {
+        _redeem(_user, _epoch, _amount);
     }
-    
-    // @notice A convenience function for less experienced bot writers. (More advanced bot writers will interact with 
-    //    this contract via the `redeem` function and wrap it in their own custom logic);
-    // @dev Advances the epoch (if needed) and redeems the max amount of coupons possible
-    //    Also frees CHI tokens to save on gas (requires that msg.sender has CHI tokens in their
-    //    account and has approved this contract to spend their CHI).
-    // @param _user The user whose coupons will attempt to be redeemed
-    // @param _epoch The epoch in which the coupons were created
-    // @param _targetEpoch The epoch that is about to be advanced _to_.
-    //    E.g., if the current epoch is 220 and we are about to advance to to epoch 221, then _targetEpoch
-    //    would be set to 221. The _targetEpoch is the epoch in which the coupon redemption will be attempted.
-    function advanceAndRedeemMax(address _user, uint256 _epoch, uint256 _targetEpoch) external useCHI {
-        // End execution early if tx is mined too early
-        uint256 targetEpochStartTime = getEpochStartTime(_targetEpoch);
-        if (block.timestamp < targetEpochStartTime) { return; }
-        
-        // advance epoch if it has not already been advanced 
-        if (ESDS.epoch() != _targetEpoch) {
-            ESDS.advance();
-            ESD.transfer(msg.sender, 100e18);
-        }
-        
-        // get max redeemable amount
-        uint256 totalRedeemable = ESDS.totalRedeemable();
-        if (totalRedeemable == 0) { return; } // no coupons to redeem
-        uint256 userBalance = ESDS.balanceOfCoupons(_user, _epoch);
-        if (userBalance == 0) { return; } // no coupons to redeem
-        uint256 maxRedeemableAmount = totalRedeemable < userBalance ? totalRedeemable : userBalance;
-        
-        // attempt to redeem coupons
-        _redeem(_user, _epoch, maxRedeemableAmount);
-    }
-
     
     // @notice Returns the timestamp at which the _targetEpoch starts
     function getEpochStartTime(uint256 _targetEpoch) public pure returns (uint256) {
