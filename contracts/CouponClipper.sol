@@ -1,7 +1,7 @@
-pragma solidity 0.7.5;
+pragma solidity 0.7.6;
 // SPDX-License-Identifier: MIT
 
-// On mainnet at: TBD
+// On mainnet at: 0xaBe194DE48045DC40fbc767F66ccBceB6D022030
 
 /**
 Copyright (c) 2020 Austin Williams
@@ -60,7 +60,7 @@ contract CouponClipperV3 {
     
     constructor() {
         house = 0x7Fb471734271b732FbEEd4B6073F401983a406e1;
-        houseRate = 1000; // (10%) of the proceeds.
+        houseRate = 1000; // Defaults to 1000 bps (10%) of proceeds.
     }
 
     // @notice Gets the number of basis points the _user is offering the bots.
